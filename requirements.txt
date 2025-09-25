@@ -1,3 +1,9 @@
-flask
-gunicorn
-
+/project
+  main.py
+  /routes
+      drone_control.py
+  /static
+      index.html
+      ...
+  requirements.txt
+  Procfile
