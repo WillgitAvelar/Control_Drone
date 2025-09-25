@@ -70,17 +70,30 @@ class DroneController:
             return {'success': True, 'response': response.decode()}
             
         except Exception as e:
-            return {'error': str(e)}
+            return {"error": str(e)}
+
+    def get_drone_status(self):
+        """Obtém o status atual do drone"""
+        if not self.connected:
+            return {"error": "Drone não conectado"}
+        try:
+            # Envia um comando para solicitar o status
+            cmd_data = {"cmd": "get_status"}
+            message = json.dumps(cmd_data).encode()
+            self.socket.sendto(message, (self.drone_ip, self.drone_port))
+            response, addr = self.socket.recvfrom(1024)
+            return {"success": True, "status": json.loads(response.decode())}
+        except Exception as e:
+            return {"error": str(e)}
 
 # Instância global do controlador
 drone_controller = DroneController()
 
-@drone_bp.route('/connect', methods=['POST'])
+@drone_bp.route("/connect", methods=["POST"])
 def connect_drone():
     """Conecta ao drone"""
     data = request.get_json()
-    ip_address = data.get('ip_address', '192.168.4.1')  # IP padrão comum para drones
-    
+    ip_address = data.get('ip_address', '127.0.0.1')  # IP padrão para testes com mock drone
     success = drone_controller.connect(ip_address)
     
     if success:
@@ -97,10 +110,18 @@ def disconnect_drone():
 @drone_bp.route('/status', methods=['GET'])
 def get_status():
     """Obtém status do drone"""
-    return jsonify({
-        'connected': drone_controller.connected,
-        'status': drone_controller.status
-    })
+    status_response = drone_controller.get_drone_status()
+    if status_response.get("success"):
+        return jsonify({
+            "connected": drone_controller.connected,
+            "status": status_response["status"]
+        })
+    else:
+        return jsonify({
+            "connected": drone_controller.connected,
+            "status": drone_controller.status, # Fallback to internal status if communication fails
+            "error": status_response["error"]
+        }), 500
 
 @drone_bp.route('/takeoff', methods=['POST'])
 def takeoff():
