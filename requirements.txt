@@ -1,9 +1,2 @@
-/project
-  main.py
-  /routes
-      drone_control.py
-  /static
-      index.html
-      ...
-  requirements.txt
-  Procfile
+Flask==3.1.2
+gunicorn==23.0.0
